@@ -10,7 +10,17 @@
         // Initialize Supabase client
         const supabaseUrl = 'https://yimddaixqetubaxjwyyc.supabase.co'
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpbWRkYWl4cWV0dWJheGp3eXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxMzMyNzIsImV4cCI6MjA1OTcwOTI3Mn0.oYEcy9mONi5W6wyQodA0d8OpvIZEsRSr1LxInGKbfy4'
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey)
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
+            realtime: {
+                params: {
+                    eventsPerSecond: 1
+                }
+            },
+            auth: {
+                persistSession: false,
+                autoRefreshToken: true
+            }
+        })
 
         // Add retry utility function
         async function retryOperation(operation, maxRetries = 3, delay = 1000) {
@@ -50,64 +60,58 @@
 
         // Load votes from Supabase
         async function loadVotes() {
-            const isConnected = await checkConnection();
-            if (!isConnected) {
-                showError('Unable to connect to the database. Please check your internet connection and try again.');
-                return false;
-            }
-
-            return retryOperation(async () => {
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('votes')
-                        .select('*')
-                        .eq('id', 1)
-                        .single();
-                    
-                    if (error) {
-                        if (error.code === 'PGRST116') {
-                            const { data: newData, error: insertError } = await supabaseClient
-                                .from('votes')
-                                .insert([{
-                                    id: 1,
-                                    nikin: 0,
-                                    cris: 0,
-                                    sassogamer: 0
-                                }])
-                                .select()
-                                .single();
-                            
-                            if (insertError) {
-                                showError('Error initializing vote counts. Please try again.');
-                                console.error('Error creating initial votes:', insertError);
-                                return false;
-                            }
-                            
-                            votes = {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('votes')
+                    .select('*')
+                    .eq('id', 1)
+                    .single();
+                
+                if (error) {
+                    if (error.code === 'PGRST116') {
+                        // If no row exists, create it
+                        const { data: newData, error: insertError } = await supabaseClient
+                            .from('votes')
+                            .insert([{
+                                id: 1,
                                 nikin: 0,
                                 cris: 0,
                                 sassogamer: 0
-                            };
-                        } else {
-                            showError('Error loading votes. Please try again.');
-                            console.error('Error loading votes:', error);
+                            }])
+                            .select()
+                            .single();
+                        
+                        if (insertError) {
+                            showError('Error initializing vote counts');
+                            console.error('Error creating initial votes:', insertError);
                             return false;
                         }
-                    } else if (data) {
+                        
                         votes = {
-                            nikin: data.nikin || 0,
-                            cris: data.cris || 0,
-                            sassogamer: data.sassogamer || 0
+                            nikin: 0,
+                            cris: 0,
+                            sassogamer: 0
                         };
+                    } else {
+                        showError('Error loading votes');
+                        console.error('Error loading votes:', error);
+                        return false;
                     }
-                    
-                    updateVoteCounts();
-                    return true;
-                } catch (error) {
-                    console.error('Error in loadVotes:', error);
-                    return false;
+                } else if (data) {
+                    votes = {
+                        nikin: data.nikin || 0,
+                        cris: data.cris || 0,
+                        sassogamer: data.sassogamer || 0
+                    };
                 }
-            });
+                
+                updateVoteCounts();
+                return true;
+            } catch (error) {
+                console.error('Error in loadVotes:', error);
+                showError('Unable to connect to the server');
+                return false;
+            }
         }
 
         // Save votes to Supabase
@@ -160,8 +164,14 @@
         }
 
         // Subscribe to real-time vote updates
+        let realtimeChannel = null;
+
         function subscribeToVotes() {
-            const channel = supabaseClient
+            if (realtimeChannel) {
+                realtimeChannel.unsubscribe();
+            }
+
+            realtimeChannel = supabaseClient
                 .channel('votes-channel')
                 .on(
                     'postgres_changes',
@@ -182,7 +192,17 @@
                         }
                     }
                 )
-                .subscribe();
+                .subscribe((status, err) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('Successfully connected to real-time updates');
+                    } else if (status === 'CHANNEL_ERROR') {
+                        console.error('Channel error:', err);
+                        setTimeout(subscribeToVotes, 5000);
+                    } else if (status === 'TIMED_OUT') {
+                        console.error('Connection timed out');
+                        setTimeout(subscribeToVotes, 5000);
+                    }
+                });
         }
 
         // Update vote counts display
@@ -299,10 +319,28 @@
             }
         }
 
+        // Handle offline/online events
+        window.addEventListener('online', function() {
+            console.log('Connection restored');
+            loadVotes();
+            subscribeToVotes();
+        });
+
+        window.addEventListener('offline', function() {
+            console.log('Connection lost');
+            showError('Internet connection lost. Please check your connection.');
+            if (realtimeChannel) {
+                realtimeChannel.unsubscribe();
+            }
+        });
+
         // Initialize on page load
         window.onload = async function() {
+            if (!navigator.onLine) {
+                showError('No internet connection. Please check your connection.');
+                return;
+            }
             await loadVotes();
-            // If all votes are 0, clear localStorage
             if (votes.nikin === 0 && votes.cris === 0 && votes.sassogamer === 0) {
                 localStorage.removeItem('hasVoted');
             }
