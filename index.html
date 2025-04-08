@@ -151,16 +151,34 @@
         // Reset votes (admin only)
         async function resetVotes() {
             if (confirm('Are you sure you want to reset all votes?')) {
-                votes = {
-                    nikin: 0,
-                    cris: 0,
-                    sassogamer: 0
-                };
-                const saved = await saveVotes();
-                if (saved) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('votes')
+                        .update({
+                            nikin: 0,
+                            cris: 0,
+                            sassogamer: 0,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', 1);
+
+                    if (error) {
+                        console.error('Error resetting votes:', error);
+                        alert('Error resetting votes. Please try again.');
+                        return;
+                    }
+
+                    // Update local state
+                    votes = {
+                        nikin: 0,
+                        cris: 0,
+                        sassogamer: 0
+                    };
+                    updateVoteCounts();
                     localStorage.clear();
                     alert('Votes have been reset successfully.');
-                } else {
+                } catch (error) {
+                    console.error('Error resetting votes:', error);
                     alert('Error resetting votes. Please try again.');
                 }
             }
