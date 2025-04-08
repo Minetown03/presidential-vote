@@ -10,7 +10,7 @@
         // Initialize Supabase client
         const supabaseUrl = 'https://yimddaixqetubaxjwyyc.supabase.co'
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpbWRkYWl4cWV0dWJheGp3eXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxMzMyNzIsImV4cCI6MjA1OTcwOTI3Mn0.oYEcy9mONi5W6wyQodA0d8OpvIZEsRSr1LxInGKbfy'
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey)
 
         // Initialize vote counts
         let votes = {
@@ -22,12 +22,16 @@
         // Load votes from Supabase
         async function loadVotes() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('votes')
                     .select('*')
+                    .eq('id', 1)
                     .single();
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('Error loading votes:', error);
+                    return;
+                }
                 
                 if (data) {
                     votes = {
@@ -35,11 +39,8 @@
                         cris: data.cris || 0,
                         sassogamer: data.sassogamer || 0
                     };
-                } else {
-                    // Initialize votes in database if not exists
-                    await saveVotes();
+                    updateVoteCounts();
                 }
-                updateVoteCounts();
             } catch (error) {
                 console.error('Error loading votes:', error);
             }
@@ -48,29 +49,41 @@
         // Save votes to Supabase
         async function saveVotes() {
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('votes')
                     .upsert({ 
-                        id: 1, // Using a single row to store all votes
+                        id: 1,
                         nikin: votes.nikin,
                         cris: votes.cris,
                         sassogamer: votes.sassogamer,
-                        updated_at: new Date()
+                        updated_at: new Date().toISOString()
                     });
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('Error saving votes:', error);
+                    return false;
+                }
+                return true;
             } catch (error) {
                 console.error('Error saving votes:', error);
+                return false;
             }
         }
 
         // Subscribe to real-time vote updates
         function subscribeToVotes() {
-            supabase
-                .channel('votes')
-                .on('postgres_changes', 
-                    { event: '*', schema: 'public', table: 'votes' },
-                    payload => {
+            const channel = supabaseClient
+                .channel('votes-channel')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'votes',
+                        filter: 'id=eq.1'
+                    },
+                    (payload) => {
+                        console.log('Change received!', payload);
                         if (payload.new) {
                             votes = {
                                 nikin: payload.new.nikin || 0,
@@ -81,7 +94,9 @@
                         }
                     }
                 )
-                .subscribe();
+                .subscribe((status) => {
+                    console.log('Subscription status:', status);
+                });
         }
 
         // Update vote counts display
@@ -103,11 +118,23 @@
                 alert('You have already voted!');
                 return;
             }
+
+            // First load latest votes
+            await loadVotes();
+            
+            // Increment vote
             votes[candidate]++;
-            await saveVotes();
-            localStorage.setItem('hasVoted', 'true');
-            updateVoteCounts();
-            showThankYou();
+            
+            // Save to database
+            const saved = await saveVotes();
+            
+            if (saved) {
+                localStorage.setItem('hasVoted', 'true');
+                showThankYou();
+            } else {
+                alert('Error saving vote. Please try again.');
+                votes[candidate]--; // Revert the vote
+            }
         }
 
         // Toggle admin panel
@@ -129,9 +156,13 @@
                     cris: 0,
                     sassogamer: 0
                 };
-                await saveVotes();
-                updateVoteCounts();
-                localStorage.clear();
+                const saved = await saveVotes();
+                if (saved) {
+                    localStorage.clear();
+                    alert('Votes have been reset successfully.');
+                } else {
+                    alert('Error resetting votes. Please try again.');
+                }
             }
         }
 
@@ -141,7 +172,7 @@
                 showThankYou();
             }
             loadVotes();
-            subscribeToVotes(); // Enable real-time updates
+            subscribeToVotes();
         };
     </script>
 </head>
