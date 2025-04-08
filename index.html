@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HRS Presidential Vote</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
+        // Initialize Supabase client
+        const supabaseUrl = 'YOUR_SUPABAhttps://yimddaixqetubaxjwyyc.supabase.coSE_URL'
+        const supabaseKey = 'YOUR_SUPABASE_ANeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpbWRkYWl4cWV0dWJheGp3eXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxMzMyNzIsImV4cCI6MjA1OTcwOTI3Mn0.oYEcy9mONi5W6wyQodA0d8OpvIZEsRSr1LxInGKbfyION_KEY'
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+
         // Initialize vote counts
         let votes = {
             nikin: 0,
@@ -13,18 +19,69 @@
             sassogamer: 0
         };
 
-        // Load votes from localStorage
-        function loadVotes() {
-            const savedVotes = localStorage.getItem('hrsVotes');
-            if (savedVotes) {
-                votes = JSON.parse(savedVotes);
+        // Load votes from Supabase
+        async function loadVotes() {
+            try {
+                const { data, error } = await supabase
+                    .from('votes')
+                    .select('*')
+                    .single();
+                
+                if (error) throw error;
+                
+                if (data) {
+                    votes = {
+                        nikin: data.nikin || 0,
+                        cris: data.cris || 0,
+                        sassogamer: data.sassogamer || 0
+                    };
+                } else {
+                    // Initialize votes in database if not exists
+                    await saveVotes();
+                }
+                updateVoteCounts();
+            } catch (error) {
+                console.error('Error loading votes:', error);
             }
-            updateVoteCounts();
         }
 
-        // Save votes to localStorage
-        function saveVotes() {
-            localStorage.setItem('hrsVotes', JSON.stringify(votes));
+        // Save votes to Supabase
+        async function saveVotes() {
+            try {
+                const { error } = await supabase
+                    .from('votes')
+                    .upsert({ 
+                        id: 1, // Using a single row to store all votes
+                        nikin: votes.nikin,
+                        cris: votes.cris,
+                        sassogamer: votes.sassogamer,
+                        updated_at: new Date()
+                    });
+                
+                if (error) throw error;
+            } catch (error) {
+                console.error('Error saving votes:', error);
+            }
+        }
+
+        // Subscribe to real-time vote updates
+        function subscribeToVotes() {
+            supabase
+                .channel('votes')
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'votes' },
+                    payload => {
+                        if (payload.new) {
+                            votes = {
+                                nikin: payload.new.nikin || 0,
+                                cris: payload.new.cris || 0,
+                                sassogamer: payload.new.sassogamer || 0
+                            };
+                            updateVoteCounts();
+                        }
+                    }
+                )
+                .subscribe();
         }
 
         // Update vote counts display
@@ -34,23 +91,20 @@
             document.getElementById('sassogamerCount').textContent = votes.sassogamer;
         }
 
-        // Show thank you message
+        // Show thank you message and hide voting section
         function showThankYou() {
-            const thankYouDiv = document.getElementById('thankYouMessage');
-            thankYouDiv.classList.remove('hidden');
-            setTimeout(() => {
-                thankYouDiv.classList.add('hidden');
-            }, 3000); // Hide after 3 seconds
+            document.getElementById('votingSection').classList.add('hidden');
+            document.getElementById('thankYouMessage').classList.remove('hidden');
         }
 
         // Handle vote submission
-        function vote(candidate) {
+        async function vote(candidate) {
             if (localStorage.getItem('hasVoted')) {
                 alert('You have already voted!');
                 return;
             }
             votes[candidate]++;
-            saveVotes();
+            await saveVotes();
             localStorage.setItem('hasVoted', 'true');
             updateVoteCounts();
             showThankYou();
@@ -61,20 +115,21 @@
             const password = prompt('Enter admin password:');
             if (password === 'admin123') {
                 document.getElementById('adminPanel').classList.toggle('hidden');
+                loadVotes(); // Refresh votes from server when opening admin panel
             } else {
                 alert('Invalid password');
             }
         }
 
         // Reset votes (admin only)
-        function resetVotes() {
+        async function resetVotes() {
             if (confirm('Are you sure you want to reset all votes?')) {
                 votes = {
                     nikin: 0,
                     cris: 0,
                     sassogamer: 0
                 };
-                saveVotes();
+                await saveVotes();
                 updateVoteCounts();
                 localStorage.clear();
             }
@@ -82,7 +137,11 @@
 
         // Initialize on page load
         window.onload = function() {
+            if (localStorage.getItem('hasVoted')) {
+                showThankYou();
+            }
             loadVotes();
+            subscribeToVotes(); // Enable real-time updates
         };
     </script>
 </head>
@@ -90,37 +149,43 @@
     <div class="container mx-auto px-4 py-8">
         <!-- Logo and Title Section -->
         <div class="text-center mb-12">
-            <img src="https://raw.githubusercontent.com/Minetown03/presidential-vote/main/hrs-logo.png" alt="HRS Logo" class="mx-auto mb-6 w-48">
+            <img src="https://raw.githubusercontent.com/Minetown03/presidential-vote/main/hrs-logo.png" alt="HRS Logo" class="mx-auto mb-6 w-[500px]">
             <h1 class="text-4xl font-bold mb-4">Presidential Vote</h1>
         </div>
 
+        <!-- Voting Section -->
+        <div id="votingSection" class="space-y-12">
+            <!-- Candidate Buttons Section -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <button onclick="vote('nikin')" class="bg-purple-800 hover:bg-purple-700 p-6 rounded-lg transition-all duration-300">
+                    <h2 class="text-2xl font-semibold">NiKn</h2>
+                </button>
+                <button onclick="vote('cris')" class="bg-purple-800 hover:bg-purple-700 p-6 rounded-lg transition-all duration-300">
+                    <h2 class="text-2xl font-semibold">CRIs</h2>
+                </button>
+                <button onclick="vote('sassogamer')" class="bg-purple-800 hover:bg-purple-700 p-6 rounded-lg transition-all duration-300">
+                    <h2 class="text-2xl font-semibold">sassogamer</h2>
+                </button>
+            </div>
+
+            <!-- User Instructions Section -->
+            <div class="bg-purple-900 p-6 rounded-lg">
+                <h2 class="text-2xl font-semibold mb-4">How Your Vote is Counted</h2>
+                <ul class="list-disc list-inside mt-2 text-gray-300">
+                    <li>You can only vote once per device</li>
+                    <li>Your vote is counted immediately</li>
+                    <li>Results are accessible to administrators</li>
+                </ul>
+            </div>
+        </div>
+
         <!-- Thank You Message (Hidden by default) -->
-        <div id="thankYouMessage" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-600 text-white p-6 rounded-lg shadow-lg text-center z-50">
-            <h2 class="text-2xl font-bold mb-2">Thank You!</h2>
-            <p>Your vote has been recorded successfully.</p>
-        </div>
-
-        <!-- Candidate Buttons Section -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <button onclick="vote('nikin')" class="bg-purple-800 hover:bg-purple-700 p-6 rounded-lg transition-all duration-300">
-                <h2 class="text-2xl font-semibold">NiKn</h2>
-            </button>
-            <button onclick="vote('cris')" class="bg-purple-800 hover:bg-purple-700 p-6 rounded-lg transition-all duration-300">
-                <h2 class="text-2xl font-semibold">CRIs</h2>
-            </button>
-            <button onclick="vote('sassogamer')" class="bg-purple-800 hover:bg-purple-700 p-6 rounded-lg transition-all duration-300">
-                <h2 class="text-2xl font-semibold">sassogamer</h2>
-            </button>
-        </div>
-
-        <!-- User Instructions Section -->
-        <div class="bg-purple-900 p-6 rounded-lg mb-12">
-            <h2 class="text-2xl font-semibold mb-4">How Your Vote is Counted</h2>
-            <ul class="list-disc list-inside mt-2 text-gray-300">
-                <li>You can only vote once per device</li>
-                <li>Your vote is counted immediately</li>
-                <li>Results are accessible to administrators</li>
-            </ul>
+        <div id="thankYouMessage" class="hidden">
+            <div class="bg-green-600 text-white p-8 rounded-lg shadow-lg text-center">
+                <h2 class="text-3xl font-bold mb-4">Thank You!</h2>
+                <p class="text-xl">Your vote has been recorded successfully.</p>
+                <p class="mt-4 text-green-200">You can check the results once they are published.</p>
+            </div>
         </div>
 
         <!-- Admin Panel (Hidden by default) -->
