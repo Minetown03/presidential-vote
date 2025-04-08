@@ -11,10 +11,13 @@
         
         .presidential-title {
             font-family: 'Montserrat', sans-serif;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
             font-weight: 900;
             color: #000000;
+            line-height: 1.1;
+            word-break: break-word;
+            hyphens: auto;
         }
 
         .btn-primary {
@@ -28,7 +31,32 @@
         }
 
         .admin-panel {
-            background-color: #FFE5B4;
+            background-color: #FFF3D4;
+        }
+
+        #voteOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #FFB921;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 640px) {
+            .presidential-title {
+                font-size: 2.5rem;
+                letter-spacing: 0.03em;
+            }
+            
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
         }
     </style>
     <script>
@@ -240,7 +268,6 @@
 
         // Show thank you message
         function showThankYou() {
-            const votingSection = document.getElementById('votingSection');
             const existingOverlay = document.getElementById('voteOverlay');
             
             if (existingOverlay) {
@@ -249,24 +276,20 @@
 
             const overlay = document.createElement('div');
             overlay.id = 'voteOverlay';
-            overlay.className = 'absolute inset-0 flex items-center justify-center bg-[#FFB921] rounded-lg shadow-lg';
-            overlay.style.zIndex = '50';
             overlay.innerHTML = `
-                <div class="text-center p-8">
-                    <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-[#F01919] flex items-center justify-center">
-                        <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="text-center p-6 md:p-8 max-w-lg mx-auto">
+                    <div class="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 rounded-full bg-[#F01919] flex items-center justify-center">
+                        <svg class="w-10 h-10 md:w-16 md:h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h2 class="text-5xl font-bold mb-6 text-black">Thank You!</h2>
-                    <p class="text-2xl text-black mb-4">Your vote has been recorded successfully.</p>
-                    <p class="text-xl text-black/80">You can only vote once per device.</p>
+                    <h2 class="text-3xl md:text-5xl font-black mb-4 md:mb-6 text-black">Thank You!</h2>
+                    <p class="text-xl md:text-2xl text-black mb-3 md:mb-4">Your vote has been recorded successfully.</p>
+                    <p class="text-lg md:text-xl text-black/80">You can only vote once per device.</p>
                 </div>
             `;
             
-            votingSection.style.position = 'relative';
-            const buttonsGrid = votingSection.querySelector('.grid');
-            votingSection.insertBefore(overlay, buttonsGrid);
+            document.body.appendChild(overlay);
         }
 
         // Check if already voted and show message
@@ -417,33 +440,33 @@
         };
     </script>
 </head>
-<body class="bg-[#FFE5B4] text-black min-h-screen">
-    <div class="container mx-auto px-4 pt-1">
+<body class="bg-[#FFF3D4] text-black min-h-screen">
+    <div class="container mx-auto px-4 pt-1 max-w-4xl">
         <!-- Logo and Title Section -->
-        <div class="text-center mb-10">
-            <img src="https://raw.githubusercontent.com/Minetown03/presidential-vote/main/hrs-logo.png" alt="HRS Logo" class="mx-auto mb-1 w-[450px]">
-            <h1 class="presidential-title text-7xl">PRESIDENTIAL VOTE</h1>
+        <div class="text-center mb-6">
+            <img src="https://raw.githubusercontent.com/Minetown03/presidential-vote/main/hrs-logo.png" alt="HRS Logo" class="mx-auto mb-2 w-[300px] sm:w-[400px] md:w-[450px]">
+            <h1 class="presidential-title text-4xl sm:text-5xl md:text-7xl px-2">PRESIDENTIAL VOTE</h1>
         </div>
 
         <!-- Voting Section -->
-        <div id="votingSection" class="space-y-12 mt-8">
+        <div id="votingSection" class="space-y-8 mt-6">
             <!-- Candidate Buttons Section -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <button onclick="vote('nikin')" class="btn-primary p-6 rounded-lg shadow-lg">
-                    <h2 class="text-2xl font-black text-black">NiKn</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                <button onclick="vote('nikin')" class="btn-primary p-4 md:p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl md:text-2xl font-black text-black">NiKn</h2>
                 </button>
-                <button onclick="vote('cris')" class="btn-primary p-6 rounded-lg shadow-lg">
-                    <h2 class="text-2xl font-black text-black">CRIs</h2>
+                <button onclick="vote('cris')" class="btn-primary p-4 md:p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl md:text-2xl font-black text-black">CRIs</h2>
                 </button>
-                <button onclick="vote('sassogamer')" class="btn-primary p-6 rounded-lg shadow-lg">
-                    <h2 class="text-2xl font-black text-black">sassogamer</h2>
+                <button onclick="vote('sassogamer')" class="btn-primary p-4 md:p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl md:text-2xl font-black text-black">sassogamer</h2>
                 </button>
             </div>
 
             <!-- User Instructions Section -->
-            <div class="bg-[#FFB921] p-6 rounded-lg shadow-lg">
-                <h2 class="text-2xl font-semibold mb-4 text-black">How Your Vote is Counted</h2>
-                <ul class="list-disc list-inside mt-2 text-black">
+            <div class="bg-[#FFB921] p-4 md:p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl md:text-2xl font-black mb-3 text-black">How Your Vote is Counted</h2>
+                <ul class="list-disc list-inside mt-2 text-black text-base md:text-lg">
                     <li>You can only vote once per device</li>
                     <li>Your vote is counted immediately</li>
                     <li>Results are accessible to administrators</li>
@@ -452,20 +475,20 @@
         </div>
 
         <!-- Admin Panel (Hidden by default) -->
-        <div id="adminPanel" class="hidden bg-[#FFB921] p-6 rounded-lg mb-6 shadow-lg">
-            <h2 class="text-2xl font-black mb-4 text-black">Vote Counts</h2>
+        <div id="adminPanel" class="hidden bg-[#FFB921] p-4 md:p-6 rounded-lg mb-6 shadow-lg">
+            <h2 class="text-xl md:text-2xl font-black mb-4 text-black">Vote Counts</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div class="bg-[#FFE5B4] p-4 rounded shadow">
+                <div class="bg-[#FFF3D4] p-4 rounded shadow">
                     <h3 class="font-black text-black">NiKn</h3>
-                    <p class="text-2xl text-black" id="nikinCount">0</p>
+                    <p class="text-xl md:text-2xl text-black" id="nikinCount">0</p>
                 </div>
-                <div class="bg-[#FFE5B4] p-4 rounded shadow">
+                <div class="bg-[#FFF3D4] p-4 rounded shadow">
                     <h3 class="font-black text-black">CRIs</h3>
-                    <p class="text-2xl text-black" id="crisCount">0</p>
+                    <p class="text-xl md:text-2xl text-black" id="crisCount">0</p>
                 </div>
-                <div class="bg-[#FFE5B4] p-4 rounded shadow">
+                <div class="bg-[#FFF3D4] p-4 rounded shadow">
                     <h3 class="font-black text-black">sassogamer</h3>
-                    <p class="text-2xl text-black" id="sassogamerCount">0</p>
+                    <p class="text-xl md:text-2xl text-black" id="sassogamerCount">0</p>
                 </div>
             </div>
             <button onclick="resetVotes()" class="bg-[#F01919] hover:bg-[#d11717] text-white px-4 py-2 rounded shadow-lg transition-colors duration-300">
@@ -475,7 +498,7 @@
 
         <!-- Admin Button -->
         <div class="fixed bottom-4 right-4">
-            <button onclick="toggleAdmin()" class="bg-[#FFB921] hover:bg-[#FFB921] p-2 rounded-full w-12 h-12 flex items-center justify-center shadow-lg">
+            <button onclick="toggleAdmin()" class="bg-[#FFB921] hover:bg-[#E5A00D] p-2 rounded-full w-12 h-12 flex items-center justify-center shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
