@@ -7,13 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
         
         .presidential-title {
             font-family: 'Montserrat', sans-serif;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            font-weight: 700;
+            font-weight: 900;
             color: #000000;
         }
 
@@ -23,12 +23,12 @@
         }
 
         .btn-primary:hover {
-            background-color: #FFB921;
+            background-color: #E5A00D;
             transform: scale(1.02);
         }
 
         .admin-panel {
-            background-color: #FFB35B;
+            background-color: #FFE5B4;
         }
     </style>
     <script>
@@ -417,12 +417,12 @@
         };
     </script>
 </head>
-<body class="bg-[#FFB35B] text-black min-h-screen">
+<body class="bg-[#FFE5B4] text-black min-h-screen">
     <div class="container mx-auto px-4 pt-1">
         <!-- Logo and Title Section -->
         <div class="text-center mb-10">
             <img src="https://raw.githubusercontent.com/Minetown03/presidential-vote/main/hrs-logo.png" alt="HRS Logo" class="mx-auto mb-1 w-[450px]">
-            <h1 class="presidential-title text-6xl font-bold">PRESIDENTIAL VOTE</h1>
+            <h1 class="presidential-title text-7xl">PRESIDENTIAL VOTE</h1>
         </div>
 
         <!-- Voting Section -->
@@ -430,13 +430,13 @@
             <!-- Candidate Buttons Section -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <button onclick="vote('nikin')" class="btn-primary p-6 rounded-lg shadow-lg">
-                    <h2 class="text-2xl font-semibold text-black">NiKn</h2>
+                    <h2 class="text-2xl font-black text-black">NiKn</h2>
                 </button>
                 <button onclick="vote('cris')" class="btn-primary p-6 rounded-lg shadow-lg">
-                    <h2 class="text-2xl font-semibold text-black">CRIs</h2>
+                    <h2 class="text-2xl font-black text-black">CRIs</h2>
                 </button>
                 <button onclick="vote('sassogamer')" class="btn-primary p-6 rounded-lg shadow-lg">
-                    <h2 class="text-2xl font-semibold text-black">sassogamer</h2>
+                    <h2 class="text-2xl font-black text-black">sassogamer</h2>
                 </button>
             </div>
 
@@ -453,18 +453,18 @@
 
         <!-- Admin Panel (Hidden by default) -->
         <div id="adminPanel" class="hidden bg-[#FFB921] p-6 rounded-lg mb-6 shadow-lg">
-            <h2 class="text-2xl font-semibold mb-4 text-black">Vote Counts</h2>
+            <h2 class="text-2xl font-black mb-4 text-black">Vote Counts</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div class="bg-[#FFB35B] p-4 rounded shadow">
-                    <h3 class="font-semibold text-black">NiKn</h3>
+                <div class="bg-[#FFE5B4] p-4 rounded shadow">
+                    <h3 class="font-black text-black">NiKn</h3>
                     <p class="text-2xl text-black" id="nikinCount">0</p>
                 </div>
-                <div class="bg-[#FFB35B] p-4 rounded shadow">
-                    <h3 class="font-semibold text-black">CRIs</h3>
+                <div class="bg-[#FFE5B4] p-4 rounded shadow">
+                    <h3 class="font-black text-black">CRIs</h3>
                     <p class="text-2xl text-black" id="crisCount">0</p>
                 </div>
-                <div class="bg-[#FFB35B] p-4 rounded shadow">
-                    <h3 class="font-semibold text-black">sassogamer</h3>
+                <div class="bg-[#FFE5B4] p-4 rounded shadow">
+                    <h3 class="font-black text-black">sassogamer</h3>
                     <p class="text-2xl text-black" id="sassogamerCount">0</p>
                 </div>
             </div>
