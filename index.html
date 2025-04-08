@@ -9,15 +9,10 @@
     <script>
         // Initialize Supabase client
         const supabaseUrl = 'https://yimddaixqetubaxjwyyc.supabase.co'
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpbWRkYWl4cWV0dWJheGp3eXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxMzMyNzIsImV4cCI6MjA1OTcwOTI3Mn0.oYEcy9mONi5W6wyQodA0d8OpvIZEsRSr1LxInGKbfy4'
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
-            db: {
-                schema: 'public'
-            },
-            auth: {
-                persistSession: false
-            }
-        })
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpbWRkYWl4cWV0dWJheGp3eXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxMzMyNzIsImV4cCI6MjA1OTcwOTI3Mn0.oYEcy9mONi5W6wyQodA0d8OpvIZEsRSr1LxInGKbfyI'
+        
+        // Initialize Supabase client with minimal config
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey)
 
         // Add retry utility function
         async function retryOperation(operation, maxRetries = 3, delay = 1000) {
@@ -79,8 +74,8 @@
                             .single();
                         
                         if (insertError) {
-                            showError('Error initializing vote counts');
                             console.error('Error creating initial votes:', insertError);
+                            showError('Unable to initialize voting system');
                             return false;
                         }
                         
@@ -89,9 +84,13 @@
                             cris: 0,
                             sassogamer: 0
                         };
+                    } else if (error.message?.includes('Invalid API key')) {
+                        console.error('Authentication error:', error);
+                        showError('Unable to connect to voting system. Please contact administrator.');
+                        return false;
                     } else {
-                        showError('Error loading votes');
                         console.error('Error loading votes:', error);
+                        showError('Unable to load current votes');
                         return false;
                     }
                 } else if (data) {
@@ -106,7 +105,7 @@
                 return true;
             } catch (error) {
                 console.error('Error in loadVotes:', error);
-                showError('Unable to connect to the server');
+                showError('Unable to connect to voting system');
                 return false;
             }
         }
@@ -171,28 +170,39 @@
                     realtimeChannel = null;
                 }
 
-                realtimeChannel = supabaseClient.channel('any')
-                    .on('postgres_changes', {
-                        event: '*',
-                        schema: 'public',
-                        table: 'votes'
-                    }, (payload) => {
-                        console.log('Change received:', payload);
-                        if (payload.new) {
-                            votes = {
-                                nikin: payload.new.nikin || 0,
-                                cris: payload.new.cris || 0,
-                                sassogamer: payload.new.sassogamer || 0
-                            };
-                            updateVoteCounts();
+                realtimeChannel = supabaseClient.channel('public:votes')
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: '*',
+                            schema: 'public',
+                            table: 'votes',
+                            filter: 'id=eq.1'
+                        },
+                        (payload) => {
+                            console.log('Change received:', payload);
+                            if (payload.new) {
+                                votes = {
+                                    nikin: payload.new.nikin || 0,
+                                    cris: payload.new.cris || 0,
+                                    sassogamer: payload.new.sassogamer || 0
+                                };
+                                updateVoteCounts();
+                            }
                         }
-                    })
-                    .subscribe();
-
-                console.log('Subscribed to real-time updates');
+                    )
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            console.log('Successfully subscribed to vote updates');
+                        }
+                    });
             } catch (error) {
                 console.error('Subscription error:', error);
-                showError('Unable to connect to real-time updates');
+                if (error.message?.includes('Invalid API key')) {
+                    showError('Unable to connect to real-time updates. Please contact administrator.');
+                } else {
+                    showError('Unable to connect to real-time updates');
+                }
             }
         }
 
@@ -329,14 +339,31 @@
         // Initialize on page load
         window.onload = async function() {
             if (!navigator.onLine) {
-                showError('No internet connection. Please check your connection.');
+                showError('No internet connection');
                 return;
             }
-            await loadVotes();
-            if (votes.nikin === 0 && votes.cris === 0 && votes.sassogamer === 0) {
-                localStorage.removeItem('hasVoted');
+
+            // Test connection first
+            try {
+                const { error } = await supabaseClient.auth.getSession();
+                if (error) {
+                    console.error('Authentication error:', error);
+                    showError('Unable to connect to voting system. Please contact administrator.');
+                    return;
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+                showError('Unable to connect to voting system');
+                return;
             }
-            await subscribeToVotes();
+
+            const loadSuccess = await loadVotes();
+            if (loadSuccess) {
+                if (votes.nikin === 0 && votes.cris === 0 && votes.sassogamer === 0) {
+                    localStorage.removeItem('hasVoted');
+                }
+                await subscribeToVotes();
+            }
         };
     </script>
 </head>
