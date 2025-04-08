@@ -6,6 +6,16 @@
     <title>HRS Presidential Vote</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
+        
+        .presidential-title {
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+    </style>
     <script>
         // Initialize Supabase client
         const supabaseUrl = 'https://yimddaixqetubaxjwyyc.supabase.co'
@@ -396,11 +406,11 @@
     </script>
 </head>
 <body class="bg-purple-950 text-white min-h-screen">
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 py-4">
         <!-- Logo and Title Section -->
-        <div class="text-center mb-12">
-            <img src="https://raw.githubusercontent.com/Minetown03/presidential-vote/main/hrs-logo.png" alt="HRS Logo" class="mx-auto mb-6 w-[500px]">
-            <h1 class="text-4xl font-bold mb-4">Presidential Vote</h1>
+        <div class="text-center mb-8">
+            <img src="https://raw.githubusercontent.com/Minetown03/presidential-vote/main/hrs-logo.png" alt="HRS Logo" class="mx-auto mb-4 w-[500px]">
+            <h1 class="presidential-title text-6xl font-bold">PRESIDENTIAL VOTE</h1>
         </div>
 
         <!-- Voting Section -->
