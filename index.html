@@ -29,7 +29,6 @@
                     .single();
                 
                 if (error) {
-                    // If no row exists, create it
                     if (error.code === 'PGRST116') {
                         const { error: insertError } = await supabaseClient
                             .from('votes')
@@ -45,18 +44,10 @@
                             console.error('Error creating initial votes:', insertError);
                             return;
                         }
-                        
-                        votes = {
-                            nikin: 0,
-                            cris: 0,
-                            sassogamer: 0
-                        };
-                        updateVoteCounts();
+                    } else {
+                        console.error('Error loading votes:', error);
                         return;
                     }
-                    
-                    console.error('Error loading votes:', error);
-                    return;
                 }
                 
                 if (data) {
@@ -65,8 +56,8 @@
                         cris: data.cris || 0,
                         sassogamer: data.sassogamer || 0
                     };
-                    updateVoteCounts();
                 }
+                updateVoteCounts();
             } catch (error) {
                 console.error('Error loading votes:', error);
             }
@@ -132,16 +123,19 @@
             document.getElementById('sassogamerCount').textContent = votes.sassogamer;
         }
 
-        // Show thank you message and hide voting section
+        // Show temporary thank you message
         function showThankYou() {
-            document.getElementById('votingSection').classList.add('hidden');
-            document.getElementById('thankYouMessage').classList.remove('hidden');
-        }
-
-        // Show voting section and hide thank you message
-        function showVotingSection() {
-            document.getElementById('votingSection').classList.remove('hidden');
-            document.getElementById('thankYouMessage').classList.add('hidden');
+            const thankYouDiv = document.createElement('div');
+            thankYouDiv.className = 'fixed top-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50';
+            thankYouDiv.innerHTML = `
+                <h2 class="font-bold text-xl">Thank You!</h2>
+                <p>Your vote has been recorded successfully.</p>
+            `;
+            document.body.appendChild(thankYouDiv);
+            
+            setTimeout(() => {
+                thankYouDiv.remove();
+            }, 3000);
         }
 
         // Handle vote submission
@@ -162,7 +156,6 @@
             
             if (saved) {
                 localStorage.setItem('hasVoted', 'true');
-                localStorage.setItem('votedFor', candidate); // Store who they voted for
                 showThankYou();
             } else {
                 alert('Error saving vote. Please try again.');
@@ -176,7 +169,6 @@
             if (password === 'admin123') {
                 document.getElementById('adminPanel').classList.toggle('hidden');
                 loadVotes(); // Refresh votes from server when opening admin panel
-                showVotingSection(); // Show voting section in admin view
             } else {
                 alert('Invalid password');
             }
@@ -186,8 +178,7 @@
         async function resetVotes() {
             if (confirm('Are you sure you want to reset all votes?')) {
                 try {
-                    // Update the row with zero votes
-                    const { data, error } = await supabaseClient
+                    const { error } = await supabaseClient
                         .from('votes')
                         .update({
                             nikin: 0,
@@ -195,8 +186,7 @@
                             sassogamer: 0,
                             updated_at: new Date().toISOString()
                         })
-                        .eq('id', 1)
-                        .select();
+                        .eq('id', 1);
 
                     if (error) {
                         console.error('Error resetting votes:', error);
@@ -204,7 +194,6 @@
                         return;
                     }
 
-                    // Update local state
                     votes = {
                         nikin: 0,
                         cris: 0,
@@ -212,16 +201,12 @@
                     };
                     updateVoteCounts();
                     localStorage.clear();
-                    showVotingSection(); // Show voting section after reset
                     
-                    // Show success message
-                    const adminPanel = document.getElementById('adminPanel');
                     const successMessage = document.createElement('div');
                     successMessage.className = 'bg-green-600 text-white px-4 py-2 rounded mt-4';
                     successMessage.textContent = 'Votes reset successfully!';
-                    adminPanel.appendChild(successMessage);
+                    document.getElementById('adminPanel').appendChild(successMessage);
                     
-                    // Remove success message after 3 seconds
                     setTimeout(() => {
                         successMessage.remove();
                     }, 3000);
@@ -234,18 +219,8 @@
         }
 
         // Initialize on page load
-        window.onload = async function() {
-            // First load the votes
-            await loadVotes();
-            
-            // Then check if user has voted and show appropriate view
-            if (localStorage.getItem('hasVoted')) {
-                showThankYou();
-            } else {
-                showVotingSection();
-            }
-            
-            // Setup real-time updates
+        window.onload = function() {
+            loadVotes();
             subscribeToVotes();
         };
     </script>
@@ -281,15 +256,6 @@
                     <li>Your vote is counted immediately</li>
                     <li>Results are accessible to administrators</li>
                 </ul>
-            </div>
-        </div>
-
-        <!-- Thank You Message (Hidden by default) -->
-        <div id="thankYouMessage" class="hidden">
-            <div class="bg-green-600 text-white p-8 rounded-lg shadow-lg text-center">
-                <h2 class="text-3xl font-bold mb-4">Thank You!</h2>
-                <p class="text-xl">Your vote has been recorded successfully.</p>
-                <p class="mt-4 text-green-200">You can check the results once they are published.</p>
             </div>
         </div>
 
