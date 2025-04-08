@@ -438,6 +438,52 @@
                 checkAndShowVotedStatus(); // Check if already voted when page loads
             }
         };
+
+        // Handle vote selection
+        function selectCandidate(candidate) {
+            // Remove any existing confirmation buttons
+            const existingConfirm = document.querySelector('.confirm-vote');
+            if (existingConfirm) {
+                existingConfirm.remove();
+            }
+
+            // Reset all buttons to default state
+            document.querySelectorAll('.btn-primary').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-[#F01919]');
+            });
+
+            // Highlight selected button
+            const selectedButton = document.querySelector(`button[data-candidate="${candidate}"]`);
+            selectedButton.classList.add('ring-4', 'ring-[#F01919]');
+
+            // Create and show confirmation button
+            const confirmButton = document.createElement('div');
+            confirmButton.className = 'confirm-vote fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50';
+            confirmButton.innerHTML = `
+                <button onclick="confirmVote('${candidate}')" 
+                        class="bg-[#F01919] hover:bg-[#d11717] text-white px-8 py-4 rounded-lg shadow-lg 
+                               text-xl font-black transition-all duration-300 transform hover:scale-105">
+                    Confirm Vote for ${candidate}
+                </button>
+            `;
+            document.body.appendChild(confirmButton);
+        }
+
+        // Handle vote confirmation
+        async function confirmVote(candidate) {
+            const confirmButton = document.querySelector('.confirm-vote');
+            if (confirmButton) {
+                confirmButton.remove();
+            }
+            
+            // Reset button highlight
+            document.querySelectorAll('.btn-primary').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-[#F01919]');
+            });
+
+            // Process the vote
+            await vote(candidate);
+        }
     </script>
 </head>
 <body class="bg-[#FFF3D4] text-black min-h-screen">
@@ -452,13 +498,13 @@
         <div id="votingSection" class="space-y-8 mt-6">
             <!-- Candidate Buttons Section -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                <button onclick="vote('nikin')" class="btn-primary p-4 md:p-6 rounded-lg shadow-lg">
+                <button onclick="selectCandidate('nikin')" data-candidate="nikin" class="btn-primary p-4 md:p-6 rounded-lg shadow-lg">
                     <h2 class="text-xl md:text-2xl font-black text-black">NiKn</h2>
                 </button>
-                <button onclick="vote('cris')" class="btn-primary p-4 md:p-6 rounded-lg shadow-lg">
+                <button onclick="selectCandidate('cris')" data-candidate="cris" class="btn-primary p-4 md:p-6 rounded-lg shadow-lg">
                     <h2 class="text-xl md:text-2xl font-black text-black">CRIs</h2>
                 </button>
-                <button onclick="vote('sassogamer')" class="btn-primary p-4 md:p-6 rounded-lg shadow-lg">
+                <button onclick="selectCandidate('sassogamer')" data-candidate="sassogamer" class="btn-primary p-4 md:p-6 rounded-lg shadow-lg">
                     <h2 class="text-xl md:text-2xl font-black text-black">sassogamer</h2>
                 </button>
             </div>
