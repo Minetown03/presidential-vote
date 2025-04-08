@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRS Presidential Vote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Initialize vote counts
+        let votes = {
+            nikin: 0,
+            cris: 0,
+            sassogamer: 0
+        };
+
+        // Load votes from localStorage
+        function loadVotes() {
+            const savedVotes = localStorage.getItem('hrsVotes');
+            if (savedVotes) {
+                votes = JSON.parse(savedVotes);
+            }
+            updateVoteCounts();
+        }
+
+        // Save votes to localStorage
+        function saveVotes() {
+            localStorage.setItem('hrsVotes', JSON.stringify(votes));
+        }
+
+        // Update vote counts display
+        function updateVoteCounts() {
+            document.getElementById('nikinCount').textContent = votes.nikin;
+            document.getElementById('crisCount').textContent = votes.cris;
+            document.getElementById('sassogamerCount').textContent = votes.sassogamer;
+        }
+
+        // Handle vote submission
+        function vote(candidate) {
+            if (localStorage.getItem('hasVoted')) {
+                alert('You have already voted!');
+                return;
+            }
+            votes[candidate]++;
+            saveVotes();
+            localStorage.setItem('hasVoted', 'true');
+            updateVoteCounts();
+            alert('Your vote has been recorded!');
+        }
+
+        // Check for admin access
+        function checkAdmin() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isAdmin = urlParams.get('admin') === 'hrs2024';
+            if (isAdmin) {
+                document.getElementById('adminPanel').classList.remove('hidden');
+            }
+        }
+
+        // Reset votes (admin only)
+        function resetVotes() {
+            if (confirm('Are you sure you want to reset all votes?')) {
+                votes = {
+                    nikin: 0,
+                    cris: 0,
+                    sassogamer: 0
+                };
+                saveVotes();
+                updateVoteCounts();
+                localStorage.clear();
+            }
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            loadVotes();
+            checkAdmin();
+        };
+    </script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Title Section -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-4">HRS Presidential Vote</h1>
+            <p class="text-gray-400">Cast your vote for the next HRS President</p>
+        </div>
+
+        <!-- Candidate Buttons Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <button onclick="vote('nikin')" class="bg-gray-800 bg-opacity-50 hover:bg-opacity-75 p-6 rounded-lg transition-all duration-300">
+                <h2 class="text-2xl font-semibold mb-2">NiKn</h2>
+                <p class="text-gray-400">Vote for NiKn</p>
+            </button>
+            <button onclick="vote('cris')" class="bg-gray-800 bg-opacity-50 hover:bg-opacity-75 p-6 rounded-lg transition-all duration-300">
+                <h2 class="text-2xl font-semibold mb-2">CRIs</h2>
+                <p class="text-gray-400">Vote for CRIs</p>
+            </button>
+            <button onclick="vote('sassogamer')" class="bg-gray-800 bg-opacity-50 hover:bg-opacity-75 p-6 rounded-lg transition-all duration-300">
+                <h2 class="text-2xl font-semibold mb-2">sassogamer</h2>
+                <p class="text-gray-400">Vote for sassogamer</p>
+            </button>
+        </div>
+
+        <!-- User Instructions Section -->
+        <div class="bg-gray-800 bg-opacity-50 p-6 rounded-lg mb-12">
+            <h2 class="text-2xl font-semibold mb-4">How Your Vote is Counted</h2>
+            <p class="text-gray-300">
+                Your vote is securely recorded in your browser. This ensures that:
+            </p>
+            <ul class="list-disc list-inside mt-2 text-gray-300">
+                <li>You can only vote once per device</li>
+                <li>Your vote is counted immediately</li>
+                <li>Votes are stored securely</li>
+                <li>Results are accessible to administrators</li>
+            </ul>
+        </div>
+
+        <!-- Admin Panel (Hidden by default) -->
+        <div id="adminPanel" class="hidden bg-gray-800 bg-opacity-50 p-6 rounded-lg">
+            <h2 class="text-2xl font-semibold mb-4">Admin Panel</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="bg-gray-700 p-4 rounded">
+                    <h3 class="font-semibold">NiKn</h3>
+                    <p class="text-2xl" id="nikinCount">0</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded">
+                    <h3 class="font-semibold">CRIs</h3>
+                    <p class="text-2xl" id="crisCount">0</p>
+                </div>
+                <div class="bg-gray-700 p-4 rounded">
+                    <h3 class="font-semibold">sassogamer</h3>
+                    <p class="text-2xl" id="sassogamerCount">0</p>
+                </div>
+            </div>
+            <button onclick="resetVotes()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">
+                Reset All Votes
+            </button>
+        </div>
+    </div>
+</body>
+</html> 
