@@ -161,40 +161,65 @@
 
         // Subscribe to real-time vote updates with reconnection
         function subscribeToVotes() {
-            const channel = supabaseClient
-                .channel('votes-channel')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: '*',
-                        schema: 'public',
-                        table: 'votes',
-                        filter: 'id=eq.1'
-                    },
-                    (payload) => {
-                        if (payload.new) {
-                            votes = {
-                                nikin: payload.new.nikin || 0,
-                                cris: payload.new.cris || 0,
-                                sassogamer: payload.new.sassogamer || 0
-                            };
-                            updateVoteCounts();
+            let retryCount = 0;
+            const maxRetries = 3;
+            
+            function connect() {
+                const channel = supabaseClient
+                    .channel('votes-channel')
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: '*',
+                            schema: 'public',
+                            table: 'votes',
+                            filter: 'id=eq.1'
+                        },
+                        (payload) => {
+                            if (payload.new) {
+                                votes = {
+                                    nikin: payload.new.nikin || 0,
+                                    cris: payload.new.cris || 0,
+                                    sassogamer: payload.new.sassogamer || 0
+                                };
+                                updateVoteCounts();
+                            }
                         }
-                    }
-                )
-                .subscribe((status) => {
-                    if (status === 'SUBSCRIBED') {
-                        console.log('Successfully subscribed to vote updates');
-                    } else if (status === 'CHANNEL_ERROR') {
-                        console.error('Error subscribing to vote updates');
-                        setTimeout(subscribeToVotes, 5000); // Retry subscription after 5 seconds
-                    }
-                });
+                    );
 
-            channel.onError((error) => {
-                console.error('Subscription error:', error);
-                setTimeout(subscribeToVotes, 5000); // Retry subscription after 5 seconds
-            });
+                channel
+                    .subscribe()
+                    .receive('ok', () => {
+                        console.log('Successfully subscribed to vote updates');
+                        retryCount = 0; // Reset retry count on successful connection
+                    })
+                    .receive('error', (error) => {
+                        console.error('Subscription error:', error);
+                        handleReconnect();
+                    })
+                    .receive('timeout', () => {
+                        console.error('Subscription timeout');
+                        handleReconnect();
+                    });
+
+                return channel;
+            }
+
+            function handleReconnect() {
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    console.log(`Retrying connection (attempt ${retryCount}/${maxRetries})...`);
+                    setTimeout(() => {
+                        connect();
+                    }, 5000); // Wait 5 seconds before retrying
+                } else {
+                    console.error('Max retry attempts reached. Please refresh the page.');
+                    showError('Unable to connect to real-time updates. Please refresh the page.');
+                }
+            }
+
+            // Initial connection
+            connect();
         }
 
         // Update vote counts display
