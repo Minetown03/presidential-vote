@@ -22,6 +22,7 @@
         // Load votes from Supabase
         async function loadVotes() {
             try {
+                console.log('Attempting to load votes...');
                 const { data, error } = await supabaseClient
                     .from('votes')
                     .select('*')
@@ -29,8 +30,15 @@
                     .single();
                 
                 if (error) {
+                    console.error('Detailed error info:', {
+                        code: error.code,
+                        message: error.message,
+                        details: error.details,
+                        hint: error.hint
+                    });
+                    
                     if (error.code === 'PGRST116') {
-                        // If no row exists, create it
+                        console.log('No existing votes found, creating initial row...');
                         const { data: newData, error: insertError } = await supabaseClient
                             .from('votes')
                             .insert([{
@@ -43,10 +51,16 @@
                             .single();
                         
                         if (insertError) {
-                            console.error('Error creating initial votes:', insertError);
+                            console.error('Error creating initial votes:', {
+                                code: insertError.code,
+                                message: insertError.message,
+                                details: insertError.details,
+                                hint: insertError.hint
+                            });
                             return false;
                         }
                         
+                        console.log('Successfully created initial votes:', newData);
                         votes = {
                             nikin: 0,
                             cris: 0,
@@ -57,6 +71,7 @@
                         return false;
                     }
                 } else if (data) {
+                    console.log('Successfully loaded votes:', data);
                     votes = {
                         nikin: data.nikin || 0,
                         cris: data.cris || 0,
@@ -67,7 +82,7 @@
                 updateVoteCounts();
                 return true;
             } catch (error) {
-                console.error('Error in loadVotes:', error);
+                console.error('Unexpected error in loadVotes:', error);
                 return false;
             }
         }
