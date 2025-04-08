@@ -178,31 +178,20 @@
         async function resetVotes() {
             if (confirm('Are you sure you want to reset all votes?')) {
                 try {
-                    // First delete the existing row
-                    const { error: deleteError } = await supabaseClient
+                    // Update the row with zero votes
+                    const { data, error } = await supabaseClient
                         .from('votes')
-                        .delete()
-                        .eq('id', 1);
-
-                    if (deleteError) {
-                        console.error('Error deleting votes:', deleteError);
-                        alert('Error resetting votes. Please try again.');
-                        return;
-                    }
-
-                    // Then insert a new row with zero votes
-                    const { error: insertError } = await supabaseClient
-                        .from('votes')
-                        .insert({
-                            id: 1,
+                        .update({
                             nikin: 0,
                             cris: 0,
                             sassogamer: 0,
                             updated_at: new Date().toISOString()
-                        });
+                        })
+                        .eq('id', 1)
+                        .select();
 
-                    if (insertError) {
-                        console.error('Error inserting reset votes:', insertError);
+                    if (error) {
+                        console.error('Error resetting votes:', error);
                         alert('Error resetting votes. Please try again.');
                         return;
                     }
@@ -215,7 +204,19 @@
                     };
                     updateVoteCounts();
                     localStorage.clear();
-                    alert('Votes have been reset successfully.');
+                    
+                    // Show success message
+                    const adminPanel = document.getElementById('adminPanel');
+                    const successMessage = document.createElement('div');
+                    successMessage.className = 'bg-green-600 text-white px-4 py-2 rounded mt-4';
+                    successMessage.textContent = 'Votes reset successfully!';
+                    adminPanel.appendChild(successMessage);
+                    
+                    // Remove success message after 3 seconds
+                    setTimeout(() => {
+                        successMessage.remove();
+                    }, 3000);
+
                 } catch (error) {
                     console.error('Error resetting votes:', error);
                     alert('Error resetting votes. Please try again.');
