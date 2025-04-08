@@ -11,14 +11,11 @@
         const supabaseUrl = 'https://yimddaixqetubaxjwyyc.supabase.co'
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpbWRkYWl4cWV0dWJheGp3eXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxMzMyNzIsImV4cCI6MjA1OTcwOTI3Mn0.oYEcy9mONi5W6wyQodA0d8OpvIZEsRSr1LxInGKbfy4'
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
-            realtime: {
-                params: {
-                    eventsPerSecond: 1
-                }
+            db: {
+                schema: 'public'
             },
             auth: {
-                persistSession: false,
-                autoRefreshToken: true
+                persistSession: false
             }
         })
 
@@ -166,22 +163,21 @@
         // Subscribe to real-time vote updates
         let realtimeChannel = null;
 
-        function subscribeToVotes() {
-            if (realtimeChannel) {
-                realtimeChannel.unsubscribe();
-            }
+        async function subscribeToVotes() {
+            try {
+                // Clean up existing subscription if any
+                if (realtimeChannel) {
+                    await realtimeChannel.unsubscribe();
+                    realtimeChannel = null;
+                }
 
-            realtimeChannel = supabaseClient
-                .channel('votes-channel')
-                .on(
-                    'postgres_changes',
-                    {
+                realtimeChannel = supabaseClient.channel('any')
+                    .on('postgres_changes', {
                         event: '*',
                         schema: 'public',
-                        table: 'votes',
-                        filter: 'id=eq.1'
-                    },
-                    (payload) => {
+                        table: 'votes'
+                    }, (payload) => {
+                        console.log('Change received:', payload);
                         if (payload.new) {
                             votes = {
                                 nikin: payload.new.nikin || 0,
@@ -190,19 +186,14 @@
                             };
                             updateVoteCounts();
                         }
-                    }
-                )
-                .subscribe((status, err) => {
-                    if (status === 'SUBSCRIBED') {
-                        console.log('Successfully connected to real-time updates');
-                    } else if (status === 'CHANNEL_ERROR') {
-                        console.error('Channel error:', err);
-                        setTimeout(subscribeToVotes, 5000);
-                    } else if (status === 'TIMED_OUT') {
-                        console.error('Connection timed out');
-                        setTimeout(subscribeToVotes, 5000);
-                    }
-                });
+                    })
+                    .subscribe();
+
+                console.log('Subscribed to real-time updates');
+            } catch (error) {
+                console.error('Subscription error:', error);
+                showError('Unable to connect to real-time updates');
+            }
         }
 
         // Update vote counts display
@@ -320,17 +311,18 @@
         }
 
         // Handle offline/online events
-        window.addEventListener('online', function() {
+        window.addEventListener('online', async function() {
             console.log('Connection restored');
-            loadVotes();
-            subscribeToVotes();
+            await loadVotes();
+            await subscribeToVotes();
         });
 
-        window.addEventListener('offline', function() {
+        window.addEventListener('offline', async function() {
             console.log('Connection lost');
             showError('Internet connection lost. Please check your connection.');
             if (realtimeChannel) {
-                realtimeChannel.unsubscribe();
+                await realtimeChannel.unsubscribe();
+                realtimeChannel = null;
             }
         });
 
@@ -344,7 +336,7 @@
             if (votes.nikin === 0 && votes.cris === 0 && votes.sassogamer === 0) {
                 localStorage.removeItem('hasVoted');
             }
-            subscribeToVotes();
+            await subscribeToVotes();
         };
     </script>
 </head>
