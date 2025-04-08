@@ -140,13 +140,18 @@
 
         // Handle vote submission
         async function vote(candidate) {
+            // First load latest votes to check current state
+            await loadVotes();
+            
+            // Check if all votes are 0, if so clear localStorage
+            if (votes.nikin === 0 && votes.cris === 0 && votes.sassogamer === 0) {
+                localStorage.removeItem('hasVoted');
+            }
+
             if (localStorage.getItem('hasVoted')) {
                 alert('You have already voted!');
                 return;
             }
-
-            // First load latest votes
-            await loadVotes();
             
             // Increment vote
             votes[candidate]++;
@@ -200,6 +205,8 @@
                         sassogamer: 0
                     };
                     updateVoteCounts();
+                    
+                    // Clear localStorage for all users
                     localStorage.clear();
                     
                     const successMessage = document.createElement('div');
@@ -220,7 +227,12 @@
 
         // Initialize on page load
         window.onload = function() {
-            loadVotes();
+            loadVotes().then(() => {
+                // If all votes are 0, clear localStorage
+                if (votes.nikin === 0 && votes.cris === 0 && votes.sassogamer === 0) {
+                    localStorage.removeItem('hasVoted');
+                }
+            });
             subscribeToVotes();
         };
     </script>
