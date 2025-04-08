@@ -29,6 +29,32 @@
                     .single();
                 
                 if (error) {
+                    // If no row exists, create it
+                    if (error.code === 'PGRST116') {
+                        const { error: insertError } = await supabaseClient
+                            .from('votes')
+                            .insert({
+                                id: 1,
+                                nikin: 0,
+                                cris: 0,
+                                sassogamer: 0,
+                                updated_at: new Date().toISOString()
+                            });
+                        
+                        if (insertError) {
+                            console.error('Error creating initial votes:', insertError);
+                            return;
+                        }
+                        
+                        votes = {
+                            nikin: 0,
+                            cris: 0,
+                            sassogamer: 0
+                        };
+                        updateVoteCounts();
+                        return;
+                    }
+                    
                     console.error('Error loading votes:', error);
                     return;
                 }
@@ -152,18 +178,31 @@
         async function resetVotes() {
             if (confirm('Are you sure you want to reset all votes?')) {
                 try {
-                    const { error } = await supabaseClient
+                    // First delete the existing row
+                    const { error: deleteError } = await supabaseClient
                         .from('votes')
-                        .update({
+                        .delete()
+                        .eq('id', 1);
+
+                    if (deleteError) {
+                        console.error('Error deleting votes:', deleteError);
+                        alert('Error resetting votes. Please try again.');
+                        return;
+                    }
+
+                    // Then insert a new row with zero votes
+                    const { error: insertError } = await supabaseClient
+                        .from('votes')
+                        .insert({
+                            id: 1,
                             nikin: 0,
                             cris: 0,
                             sassogamer: 0,
                             updated_at: new Date().toISOString()
-                        })
-                        .eq('id', 1);
+                        });
 
-                    if (error) {
-                        console.error('Error resetting votes:', error);
+                    if (insertError) {
+                        console.error('Error inserting reset votes:', insertError);
                         alert('Error resetting votes. Please try again.');
                         return;
                     }
