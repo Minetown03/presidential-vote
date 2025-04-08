@@ -213,24 +213,50 @@
             document.getElementById('sassogamerCount').textContent = votes.sassogamer;
         }
 
-        // Show temporary thank you message
+        // Show thank you message
         function showThankYou() {
-            const thankYouDiv = document.createElement('div');
-            thankYouDiv.className = 'fixed top-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50';
-            thankYouDiv.innerHTML = `
-                <h2 class="font-bold text-xl">Thank You!</h2>
-                <p>Your vote has been recorded successfully.</p>
-            `;
-            document.body.appendChild(thankYouDiv);
+            const votingSection = document.getElementById('votingSection');
+            const existingOverlay = document.getElementById('voteOverlay');
             
-            setTimeout(() => {
-                thankYouDiv.remove();
-            }, 3000);
+            if (existingOverlay) {
+                return; // Don't create another overlay if one exists
+            }
+
+            const overlay = document.createElement('div');
+            overlay.id = 'voteOverlay';
+            overlay.className = 'absolute inset-0 flex items-center justify-center bg-purple-900/90 rounded-lg';
+            overlay.innerHTML = `
+                <div class="text-center p-8">
+                    <svg class="w-20 h-20 mx-auto mb-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h2 class="text-4xl font-bold mb-4">Thank You!</h2>
+                    <p class="text-xl text-gray-300">Your vote has been recorded successfully.</p>
+                    <p class="text-lg text-gray-400 mt-4">You can only vote once per device.</p>
+                </div>
+            `;
+            
+            // Make votingSection relative if it's not already
+            votingSection.style.position = 'relative';
+            votingSection.appendChild(overlay);
+        }
+
+        // Check if already voted and show message
+        function checkAndShowVotedStatus() {
+            if (localStorage.getItem('hasVoted')) {
+                showThankYou();
+                return true;
+            }
+            return false;
         }
 
         // Handle vote submission
         async function vote(candidate) {
             try {
+                if (checkAndShowVotedStatus()) {
+                    return;
+                }
+
                 // First load latest votes
                 const loadSuccess = await loadVotes();
                 if (!loadSuccess) {
@@ -241,11 +267,6 @@
                 // Check if all votes are 0, if so clear localStorage
                 if (votes.nikin === 0 && votes.cris === 0 && votes.sassogamer === 0) {
                     localStorage.removeItem('hasVoted');
-                }
-
-                if (localStorage.getItem('hasVoted')) {
-                    alert('You have already voted!');
-                    return;
                 }
 
                 // Increment vote
@@ -363,6 +384,7 @@
                     localStorage.removeItem('hasVoted');
                 }
                 await subscribeToVotes();
+                checkAndShowVotedStatus(); // Check if already voted when page loads
             }
         };
     </script>
