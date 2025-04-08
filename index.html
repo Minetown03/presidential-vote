@@ -14,6 +14,21 @@
             letter-spacing: 0.1em;
             text-transform: uppercase;
             font-weight: 700;
+            color: #000000;
+        }
+
+        .btn-primary {
+            background-color: #FFB921;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #FFB921;
+            transform: scale(1.02);
+        }
+
+        .admin-panel {
+            background-color: #FFB35B;
         }
     </style>
     <script>
@@ -229,30 +244,27 @@
             const existingOverlay = document.getElementById('voteOverlay');
             
             if (existingOverlay) {
-                return; // Don't create another overlay if one exists
+                return;
             }
 
             const overlay = document.createElement('div');
             overlay.id = 'voteOverlay';
-            overlay.className = 'absolute inset-0 flex items-center justify-center bg-purple-800 rounded-lg shadow-lg';
+            overlay.className = 'absolute inset-0 flex items-center justify-center bg-[#FFB921] rounded-lg shadow-lg';
             overlay.style.zIndex = '50';
             overlay.innerHTML = `
                 <div class="text-center p-8">
-                    <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-green-500 flex items-center justify-center">
+                    <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-[#F01919] flex items-center justify-center">
                         <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h2 class="text-5xl font-bold mb-6 text-white">Thank You!</h2>
-                    <p class="text-2xl text-white mb-4">Your vote has been recorded successfully.</p>
-                    <p class="text-xl text-gray-200">You can only vote once per device.</p>
+                    <h2 class="text-5xl font-bold mb-6 text-black">Thank You!</h2>
+                    <p class="text-2xl text-black mb-4">Your vote has been recorded successfully.</p>
+                    <p class="text-xl text-black/80">You can only vote once per device.</p>
                 </div>
             `;
             
-            // Make votingSection relative if it's not already
             votingSection.style.position = 'relative';
-            
-            // Insert overlay before the grid of buttons
             const buttonsGrid = votingSection.querySelector('.grid');
             votingSection.insertBefore(overlay, buttonsGrid);
         }
@@ -405,7 +417,7 @@
         };
     </script>
 </head>
-<body class="bg-purple-950 text-white min-h-screen">
+<body class="bg-[#FFB35B] text-black min-h-screen">
     <div class="container mx-auto px-4 pt-1">
         <!-- Logo and Title Section -->
         <div class="text-center mb-10">
@@ -417,21 +429,21 @@
         <div id="votingSection" class="space-y-12 mt-8">
             <!-- Candidate Buttons Section -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <button onclick="vote('nikin')" class="bg-purple-800 hover:bg-purple-700 p-6 rounded-lg transition-all duration-300">
-                    <h2 class="text-2xl font-semibold">NiKn</h2>
+                <button onclick="vote('nikin')" class="btn-primary p-6 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-semibold text-black">NiKn</h2>
                 </button>
-                <button onclick="vote('cris')" class="bg-purple-800 hover:bg-purple-700 p-6 rounded-lg transition-all duration-300">
-                    <h2 class="text-2xl font-semibold">CRIs</h2>
+                <button onclick="vote('cris')" class="btn-primary p-6 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-semibold text-black">CRIs</h2>
                 </button>
-                <button onclick="vote('sassogamer')" class="bg-purple-800 hover:bg-purple-700 p-6 rounded-lg transition-all duration-300">
-                    <h2 class="text-2xl font-semibold">sassogamer</h2>
+                <button onclick="vote('sassogamer')" class="btn-primary p-6 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-semibold text-black">sassogamer</h2>
                 </button>
             </div>
 
             <!-- User Instructions Section -->
-            <div class="bg-purple-900 p-6 rounded-lg">
-                <h2 class="text-2xl font-semibold mb-4">How Your Vote is Counted</h2>
-                <ul class="list-disc list-inside mt-2 text-gray-300">
+            <div class="bg-[#FFB921] p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 text-black">How Your Vote is Counted</h2>
+                <ul class="list-disc list-inside mt-2 text-black">
                     <li>You can only vote once per device</li>
                     <li>Your vote is counted immediately</li>
                     <li>Results are accessible to administrators</li>
@@ -440,30 +452,30 @@
         </div>
 
         <!-- Admin Panel (Hidden by default) -->
-        <div id="adminPanel" class="hidden bg-purple-900 p-6 rounded-lg mb-6">
-            <h2 class="text-2xl font-semibold mb-4">Vote Counts</h2>
+        <div id="adminPanel" class="hidden bg-[#FFB921] p-6 rounded-lg mb-6 shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4 text-black">Vote Counts</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div class="bg-purple-800 p-4 rounded">
-                    <h3 class="font-semibold">NiKn</h3>
-                    <p class="text-2xl" id="nikinCount">0</p>
+                <div class="bg-[#FFB35B] p-4 rounded shadow">
+                    <h3 class="font-semibold text-black">NiKn</h3>
+                    <p class="text-2xl text-black" id="nikinCount">0</p>
                 </div>
-                <div class="bg-purple-800 p-4 rounded">
-                    <h3 class="font-semibold">CRIs</h3>
-                    <p class="text-2xl" id="crisCount">0</p>
+                <div class="bg-[#FFB35B] p-4 rounded shadow">
+                    <h3 class="font-semibold text-black">CRIs</h3>
+                    <p class="text-2xl text-black" id="crisCount">0</p>
                 </div>
-                <div class="bg-purple-800 p-4 rounded">
-                    <h3 class="font-semibold">sassogamer</h3>
-                    <p class="text-2xl" id="sassogamerCount">0</p>
+                <div class="bg-[#FFB35B] p-4 rounded shadow">
+                    <h3 class="font-semibold text-black">sassogamer</h3>
+                    <p class="text-2xl text-black" id="sassogamerCount">0</p>
                 </div>
             </div>
-            <button onclick="resetVotes()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">
+            <button onclick="resetVotes()" class="bg-[#F01919] hover:bg-[#d11717] text-white px-4 py-2 rounded shadow-lg transition-colors duration-300">
                 Reset All Votes
             </button>
         </div>
 
         <!-- Admin Button -->
         <div class="fixed bottom-4 right-4">
-            <button onclick="toggleAdmin()" class="bg-purple-900 hover:bg-purple-800 p-2 rounded-full w-12 h-12 flex items-center justify-center">
+            <button onclick="toggleAdmin()" class="bg-[#FFB921] hover:bg-[#FFB921] p-2 rounded-full w-12 h-12 flex items-center justify-center shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
