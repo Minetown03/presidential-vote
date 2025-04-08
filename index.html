@@ -138,6 +138,12 @@
             document.getElementById('thankYouMessage').classList.remove('hidden');
         }
 
+        // Show voting section and hide thank you message
+        function showVotingSection() {
+            document.getElementById('votingSection').classList.remove('hidden');
+            document.getElementById('thankYouMessage').classList.add('hidden');
+        }
+
         // Handle vote submission
         async function vote(candidate) {
             if (localStorage.getItem('hasVoted')) {
@@ -156,6 +162,7 @@
             
             if (saved) {
                 localStorage.setItem('hasVoted', 'true');
+                localStorage.setItem('votedFor', candidate); // Store who they voted for
                 showThankYou();
             } else {
                 alert('Error saving vote. Please try again.');
@@ -169,6 +176,7 @@
             if (password === 'admin123') {
                 document.getElementById('adminPanel').classList.toggle('hidden');
                 loadVotes(); // Refresh votes from server when opening admin panel
+                showVotingSection(); // Show voting section in admin view
             } else {
                 alert('Invalid password');
             }
@@ -204,6 +212,7 @@
                     };
                     updateVoteCounts();
                     localStorage.clear();
+                    showVotingSection(); // Show voting section after reset
                     
                     // Show success message
                     const adminPanel = document.getElementById('adminPanel');
@@ -225,11 +234,18 @@
         }
 
         // Initialize on page load
-        window.onload = function() {
+        window.onload = async function() {
+            // First load the votes
+            await loadVotes();
+            
+            // Then check if user has voted and show appropriate view
             if (localStorage.getItem('hasVoted')) {
                 showThankYou();
+            } else {
+                showVotingSection();
             }
-            loadVotes();
+            
+            // Setup real-time updates
             subscribeToVotes();
         };
     </script>
